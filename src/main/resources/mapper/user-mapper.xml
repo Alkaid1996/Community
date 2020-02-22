@@ -10,8 +10,7 @@
         id,username,password,salt,email,type,status,activation_code,header_url,create_time
     </sql>
     <insert id="insertUser" parameterType="com.demoCommunity.Community.entity.User" keyProperty="id">
-        insert into user
-        <include refid="insertFields"></include>
+        insert into user(<include refid="insertFields"></include>)
         values(#{username},#{password},#{salt},#{email},#{type},#{status},#{activationCode},#{headerUrl},#{createTime})
     </insert>
     <update id="updateStatus">

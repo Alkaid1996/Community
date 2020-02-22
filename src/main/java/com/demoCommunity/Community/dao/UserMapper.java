@@ -13,6 +13,7 @@ public interface UserMapper {
     User selectByEmail(String email);
 
     //返回插入数据的行数
+
     int insertUser(User user);
 
     int updateStatus(int id, int status);
