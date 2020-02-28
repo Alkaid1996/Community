@@ -20,5 +20,15 @@ public interface DiscussPostMapper {
 
    int sumDiscussPosts(@Param("userId") int userId);
 
+   //发布帖子
 
+   int insertDiscussPost(DiscussPost discussPost);
+
+   //帖子详情
+
+    DiscussPost selectDiscussPostById(int id);
+
+    //评论数量
+
+    int updateCommentCount(int id,int commentCount);
 }

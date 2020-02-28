@@ -1,10 +1,13 @@
 package com.demoCommunity.Community.controller;
 
-import com.demoCommunity.Community.dao.DiscussPostMapper;
 import com.demoCommunity.Community.entity.DiscussPost;
 import com.demoCommunity.Community.entity.Page;
 import com.demoCommunity.Community.entity.User;
+import com.demoCommunity.Community.service.DiscussPostService;
+import com.demoCommunity.Community.service.LikeService;
 import com.demoCommunity.Community.service.UserService;
+import com.demoCommunity.Community.util.CommunityConstant;
+import com.demoCommunity.Community.util.CommunityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,31 +20,43 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-public class IndexController {
+public class IndexController implements CommunityConstant {
     @Autowired
     private UserService userService;
 
     @Autowired
-    private DiscussPostMapper discussPostMapper;
+    private DiscussPostService discussPostService;
 
-    @RequestMapping(value = "/index", method = RequestMethod.GET)
+    @Autowired
+    private LikeService likeService;
+
+    @RequestMapping(path = "/index", method = RequestMethod.GET)
     public String getIndexPage(Model model, Page page) {
         //方法调用前，SpringMVC会自动实例化Model和Page,并将Page注入Model.
         //所以，在thymeleaf中可以直接访问Page对象中的数据
-        page.setRows(discussPostMapper.sumDiscussPosts(0));
+        page.setRows(discussPostService.findDiscussPostSum(0));
         page.setPath("/index");
-        List<DiscussPost> list = discussPostMapper.selectDiscussPosts(0, page.getOffset(), page.getLimit());
-        List<Map<String, Object>> discussPosts = new ArrayList<>();
+        List<DiscussPost> list = discussPostService.findDiscussPost(0, page.getOffset(), page.getLimit());
+        List<Map<String,Object>> discussPosts = new ArrayList<>();
         if (list != null) {
-            for (DiscussPost discussPost : list) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("post", discussPost);
-                User user = userService.findUserById(discussPost.getUserId());
-                map.put("user", user);
+            for (DiscussPost post : list) {
+                Map<String,Object> map=new HashMap<>();
+                map.put("post",post);
+                User user = userService.findUserById(post.getUserId());
+                map.put("user",user);
+
+                long likeCount=likeService.findEntityLikeCount(ENTITY_TYPE_POST,post.getId());
+                map.put("likeCount",likeCount);
+
                 discussPosts.add(map);
             }
         }
-        model.addAttribute("discussPosts", discussPosts);
+        model.addAttribute("discussPosts",discussPosts);
         return "/index";
+    }
+
+    @RequestMapping(path="/error",method = RequestMethod.GET)
+    public String getErrorPage(){
+        return "/error/500";
     }
 }

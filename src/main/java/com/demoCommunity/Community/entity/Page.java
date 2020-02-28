@@ -14,6 +14,7 @@ public class Page {
     private int rows;
 
     //查询路径(用来分页连接）
+
     private String path;
 
     public int getCurrent() {

@@ -2,10 +2,12 @@ package com.demoCommunity.Community.dao;
 
 import com.demoCommunity.Community.entity.User;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface UserMapper {
     //返回的是用户的具体信息
+
     User selectById(int id);
 
     User selectByName(String username);

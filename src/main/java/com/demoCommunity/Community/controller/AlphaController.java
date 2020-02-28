@@ -94,4 +94,12 @@ public class AlphaController {
         httpServletResponse.addCookie(cookie);
         return "set cookie";
     }
+
+    @RequestMapping(path = "/ajax",method = RequestMethod.POST)
+    @ResponseBody
+    public String testAjax(String name,int age){
+        System.out.println(name);
+        System.out.println(age);
+        return CommunityUtil.getJsonString(0,"操作成功！");
+    }
 }

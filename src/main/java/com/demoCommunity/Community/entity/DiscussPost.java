@@ -87,7 +87,7 @@ public class DiscussPost {
 
     @Override
     public String toString() {
-        return "discussPost{" +
+        return "DiscussPost{" +
                 "id=" + id +
                 ", userId=" + userId +
                 ", title='" + title + '\'' +

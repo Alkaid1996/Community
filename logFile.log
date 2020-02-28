@@ -1,0 +1,7 @@
+10:30:01 [main] INFO  o.s.s.c.ThreadPoolTaskExecutor - Initializing ExecutorService 'applicationTaskExecutor'
+10:30:01 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+10:30:02 [main] INFO  c.d.Community.LoggerTests - Started LoggerTests in 3.343 seconds (JVM running for 4.259)
+10:30:02 [main] INFO  c.d.Community.LoggerTests - info log
+10:30:02 [main] WARN  c.d.Community.LoggerTests - warn log
+10:30:02 [main] ERROR c.d.Community.LoggerTests - error log
+10:30:02 [Thread-2] INFO  o.s.s.c.ThreadPoolTaskExecutor - Shutting down ExecutorService 'applicationTaskExecutor'

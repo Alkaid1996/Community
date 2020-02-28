@@ -70,6 +70,7 @@
         </filter>
     </appender>
 
+
     <!-- console -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -81,7 +82,7 @@
         </filter>
     </appender>
 
-    <logger name="com.demoCommunity.community" level="debug"/>
+    <logger name="com.demoCommunity.community" level="DEBUG"/>
 
     <root level="info">
         <appender-ref ref="FILE_ERROR"/>
