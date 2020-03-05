@@ -25,8 +25,16 @@
         and entity_type=#{entityType}
         and entity_id=#{entityId}
     </select>
-    <insert id="insertComment" parameterType="comment">
+    <insert id="insertComment" parameterType="com.demoCommunity.Community.entity.Comment">
         insert into comment(<include refid="insertFields"></include>)
         values(#{userId},#{entityType},#{entityId},#{targetId},#{content},#{status},#{createTime})
     </insert>
+    <select id="selectCommentById" resultType="com.demoCommunity.Community.entity.Comment">
+        select <include refid="selectFields"></include>
+        from comment
+        where id=#{id}
+    </select>
+
+
+
 </mapper>

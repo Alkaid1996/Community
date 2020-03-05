@@ -14,8 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-@Component
-@Aspect
+//为了压力测试注掉了aop，防止频繁打日志
+//@Component
+//@Aspect
 public class ServiceLogAspect {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceLogAspect.class);
@@ -30,6 +31,9 @@ public class ServiceLogAspect {
         //用户ip[1.2.3.4]，在[xxx]，访问了[com.demoCommunity.service.xxx()].
         //强转成子类型
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if(attributes==null){
+            return;
+        }
         HttpServletRequest request = attributes.getRequest();
         String ip = request.getRemoteHost();
         String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());

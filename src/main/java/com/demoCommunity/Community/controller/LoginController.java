@@ -3,12 +3,16 @@ package com.demoCommunity.Community.controller;
 import com.demoCommunity.Community.entity.User;
 import com.demoCommunity.Community.service.UserService;
 import com.demoCommunity.Community.util.CommunityConstant;
+import com.demoCommunity.Community.util.CommunityUtil;
+import com.demoCommunity.Community.util.RedisKeyUtil;
 import com.google.code.kaptcha.Producer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -24,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 public class LoginController implements CommunityConstant {
@@ -37,6 +42,9 @@ public class LoginController implements CommunityConstant {
 
     @Autowired
     private Producer kaptchaProducer;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Value("${server.servlet.context-path}")
     private String contextPath;
@@ -93,11 +101,27 @@ public class LoginController implements CommunityConstant {
     //因为这个交互其实是跨请求的，所以需要加上加密的session来交互，避免信息泄漏
 
     @RequestMapping(path = "/kaptcha", method = RequestMethod.GET)
-    public void getKaptcha(HttpServletResponse httpServletResponse, HttpSession httpSession) {
+    public void getKaptcha(HttpServletResponse httpServletResponse
+            /*重构代码！验证码不再存储在Session里，而是存储在redis里
+             , HttpSession httpSession*/) {
         String text = kaptchaProducer.createText();
         BufferedImage image = kaptchaProducer.createImage(text);
         //将验证码存入session
-        httpSession.setAttribute("kaptcha", text);
+        //httpSession.setAttribute("kaptcha", text);
+
+        //先要确认这个验证码的归属
+
+        String kaptchaOwner = CommunityUtil.generateUUID();
+        Cookie cookie = new Cookie("kaptchaOwner", kaptchaOwner);
+        cookie.setMaxAge(60);
+        cookie.setPath(contextPath);
+        httpServletResponse.addCookie(cookie);
+        //将验证码存储Redis
+        String redisKey = RedisKeyUtil.getKaptchaKey(kaptchaOwner);
+        redisTemplate.opsForValue().set(redisKey, text, 60, TimeUnit.SECONDS);
+
+
+        //将图片输出给浏览器
         httpServletResponse.setContentType("image/png");
         OutputStream os = null;
         try {
@@ -111,10 +135,21 @@ public class LoginController implements CommunityConstant {
     @RequestMapping(path = "/login", method = RequestMethod.POST)
     public String login(String username, String password,
                         String code, boolean rememberme,
-                        Model model, HttpSession session,
-                        HttpServletResponse httpServletResponse) {
-        String kaptcha = (String) session.getAttribute("kaptcha");
+                        Model model, /*HttpSession session,
+                        之前是在session里存储数据，现在是在redis里存储
+                        */
+                        HttpServletResponse httpServletResponse, @CookieValue("kaptchaOwner") String kaptchaOwner) {
+        //检查验证码，这是从session里取
+        //String kaptcha = (String) session.getAttribute("kaptcha");
         //检查验证码
+
+        String kaptcha = null;
+
+        if (StringUtils.isNotBlank(kaptchaOwner)) {
+            String redisKey = RedisKeyUtil.getKaptchaKey(kaptchaOwner);
+            kaptcha = (String) redisTemplate.opsForValue().get(redisKey);
+        }
+
         if (StringUtils.isBlank(kaptcha)
                 || StringUtils.isBlank(code)
                 || !kaptcha.equalsIgnoreCase(code)) {
@@ -137,9 +172,13 @@ public class LoginController implements CommunityConstant {
         }
     }
 
-    @RequestMapping(path = "/logout",method = RequestMethod.GET)
-    public String logout(@CookieValue("ticket") String ticket){
+    @RequestMapping(path = "/logout", method = RequestMethod.GET)
+    public String logout(@CookieValue("ticket") String ticket) {
         userService.logout(ticket);
+
+        //退出时清除认证权限
+        SecurityContextHolder.clearContext();
+
         return "redirect:/login";
     }
 }

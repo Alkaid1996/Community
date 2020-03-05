@@ -1,9 +1,7 @@
 package com.demoCommunity.Community.controller;
 
-import com.demoCommunity.Community.entity.Comment;
-import com.demoCommunity.Community.entity.DiscussPost;
-import com.demoCommunity.Community.entity.Page;
-import com.demoCommunity.Community.entity.User;
+import com.demoCommunity.Community.entity.*;
+import com.demoCommunity.Community.event.EventProducer;
 import com.demoCommunity.Community.service.CommentService;
 import com.demoCommunity.Community.service.DiscussPostService;
 import com.demoCommunity.Community.service.LikeService;
@@ -11,7 +9,9 @@ import com.demoCommunity.Community.service.UserService;
 import com.demoCommunity.Community.util.CommunityConstant;
 import com.demoCommunity.Community.util.CommunityUtil;
 import com.demoCommunity.Community.util.HostHolder;
+import com.demoCommunity.Community.util.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +29,9 @@ public class DiscussPostController implements CommunityConstant {
     private LikeService likeService;
 
     @Autowired
+    private EventProducer eventProducer;
+
+    @Autowired
     private DiscussPostService discussPostService;
 
     @Autowired
@@ -39,6 +42,9 @@ public class DiscussPostController implements CommunityConstant {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @RequestMapping(path = "/add", method = RequestMethod.POST)
     @ResponseBody
@@ -53,6 +59,20 @@ public class DiscussPostController implements CommunityConstant {
         post.setContent(content);
         post.setCreateTime(new Date());
         discussPostService.addDiscussPost(post);
+
+        //触发发帖事件
+        Event event =new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(user.getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(post.getId());
+
+        eventProducer.fireEvent(event);
+
+        String redisKey= RedisKeyUtil.getPostScoreKey();
+        //放在什么数据结构呢？
+        //队列：ABACA的话对队列的统计会有重复
+        redisTemplate.opsForSet().add(redisKey,post.getId());
 
         //报错的情况最后全局处理
         return CommunityUtil.getJsonString(0, "发布成功！");
@@ -151,4 +171,67 @@ public class DiscussPostController implements CommunityConstant {
         model.addAttribute("comments", commentVoList);
         return "/site/discuss-detail";
     }
+
+    //置顶
+    @RequestMapping(path = "/top",method = RequestMethod.POST)
+    @ResponseBody
+    public String setTop(int id){
+        discussPostService.updateType(id,1);
+
+        //触发发帖事件
+        Event event =new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(id);
+        eventProducer.fireEvent(event);
+
+        String redisKey= RedisKeyUtil.getPostScoreKey();
+        //放在什么数据结构呢？
+        //队列：ABACA的话对队列的统计会有重复
+        redisTemplate.opsForSet().add(redisKey,id);
+        return CommunityUtil.getJsonString(0);
+    }
+
+    //加精
+    @RequestMapping(path = "/wonderful",method = RequestMethod.POST)
+    @ResponseBody
+    public String setWonderful(int id){
+        discussPostService.updateStatus(id,1);
+
+        //触发发帖事件
+        Event event =new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(id);
+        eventProducer.fireEvent(event);
+
+        String redisKey= RedisKeyUtil.getPostScoreKey();
+        //放在什么数据结构呢？
+        //队列：ABACA的话对队列的统计会有重复
+        redisTemplate.opsForSet().add(redisKey,id);
+
+        return CommunityUtil.getJsonString(0);
+    }
+
+    //删除
+    //置顶
+    @RequestMapping(path = "/delete",method = RequestMethod.POST)
+    @ResponseBody
+    public String setDelete(int id){
+        discussPostService.updateStatus(id,2);
+
+        //触发发帖事件
+        Event event =new Event()
+                .setTopic(TOPIC_DELETE)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(id);
+        eventProducer.fireEvent(event);
+
+
+        return CommunityUtil.getJsonString(0);
+    }
+
 }

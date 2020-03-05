@@ -3,7 +3,11 @@ package com.demoCommunity.Community.dao;
 import com.demoCommunity.Community.entity.LoginTicket;
 import org.apache.ibatis.annotations.*;
 
+/**
+ * 因为已经重构，因此不再推荐使用这个mapper，而是直接将登录凭证存储进redis
+ */
 @Mapper
+@Deprecated
 public interface LoginTicketMapper {
 
     @Insert({
