@@ -37,7 +37,7 @@
 
 通过@Aspect注解生成切面，然后生成Bean统一交给Bean工厂来处理，通过@Pointcut来声明joinpoint切点，通过@Before等环绕注解来做代理对象，统一记录日志
 
-## Spring继承Redis
+## Spring集成Redis
 
 引入依赖，连接本地Redis，配置Redis配置类，完成RedisTemplate来操作Redis数据库，并进行了连接测试
 
@@ -49,7 +49,20 @@
 
 为了实现个人主页下的所有赞，可以通过事务下的点赞和计数功能的事务性保证数据的正确性，最后通过具体实体的真实UserId来完成个人总赞数的实现
 
+## 通过Redis实现了关注功能，并且将验证码、登录凭证、用户信息等信息存进Redis
 
+通过关注为key实现关注功能，为了解决项目中验证码放在Session放在服务器中，服务器无法存放太多Session，和Session难以共享的问题，将验证码放进Redis，同时将登录凭证也存入Redis,将用户缓存信息缓存入Redis
 
+## 集成kafka进行消息通知
+
+将点赞关注等需要提醒的方法都当成一个事件，开始面向事件变成，配置好even的生产者和消费者后，任何事件都会fire，同时一边会有消费者来消费事件，学习了生产者消费者模式
+
+## 实现搜索功能
+
+通过集成elasticsearch搜索引擎实现搜索功能
+
+## 安全性问题
+
+集合Spring Security，该组件作用在JavaEE filter，
 
 
